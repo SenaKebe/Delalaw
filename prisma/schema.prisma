@@ -1,0 +1,143 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum ProductType {
+  FORSALE
+  FORRENT
+  SERVICE
+}
+
+model User {
+  id               String @id @default(auto()) @map("_id") @db.ObjectId
+  name             String
+  email            String @unique
+  password         String
+  phoneNumber      String
+  userType         String
+  userStatus       String
+  registrationDate DateTime @default(now())
+
+  products         Product[]
+  cart             Cart?
+  orders           Order[]
+  conversationsOne Conversation[] @relation("UserOne")
+  conversationsTwo Conversation[] @relation("UserTwo")
+  chatsSent        Chat[] @relation("Sender")
+  chatsReceived    Chat[] @relation("Receiver")
+  reviews          RatingAndReview[]
+}
+
+model Category {
+  id   String @id @default(auto()) @map("_id") @db.ObjectId
+  name String
+
+  products Product[]
+}
+
+model Product {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  categoryId  String @db.ObjectId
+  type        ProductType
+  price       Float
+  location    String
+  postedById  String @db.ObjectId
+  postingDate DateTime @default(now())
+  status      String
+
+  category    Category @relation(fields: [categoryId], references: [id])
+  postedBy    User @relation(fields: [postedById], references: [id])
+  cartItems   CartItem[]
+  reviews     RatingAndReview[]
+}
+
+model Cart {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  userId  String @unique @db.ObjectId
+
+  user      User @relation(fields: [userId], references: [id])
+  cartItems CartItem[]
+  order     Order[]
+}
+
+model CartItem {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  cartId     String @db.ObjectId
+  productId  String @db.ObjectId
+  quantity   Int
+  addedDate  DateTime @default(now())
+
+  cart       Cart @relation(fields: [cartId], references: [id])
+  product    Product @relation(fields: [productId], references: [id])
+}
+
+model Order {
+  id                 String @id @default(auto()) @map("_id") @db.ObjectId
+  cartId             String @db.ObjectId
+  userId             String @db.ObjectId
+  orderDate          DateTime @default(now())
+  termsAndConditions String
+  status             String // "Pending", "Completed", "Canceled"
+
+  cart      Cart @relation(fields: [cartId], references: [id])
+  user      User @relation(fields: [userId], references: [id])
+  payment   Payment?
+}
+
+model Payment {
+  id            String @id @default(auto()) @map("_id") @db.ObjectId
+  orderId       String @db.ObjectId @unique
+  amount        Float
+  paymentDate   DateTime @default(now())
+  paymentMethod String
+  transactionId String
+
+  order         Order @relation(fields: [orderId], references: [id])
+}
+
+model Conversation {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  userOneId   String @db.ObjectId
+  userTwoId   String @db.ObjectId
+  createdDate DateTime @default(now())
+
+  userOne User @relation("UserOne", fields: [userOneId], references: [id])
+  userTwo User @relation("UserTwo", fields: [userTwoId], references: [id])
+  chats   Chat[]
+}
+
+model Chat {
+  id             String @id @default(auto()) @map("_id") @db.ObjectId
+  conversationId String @db.ObjectId
+  message        String
+  senderId       String @db.ObjectId
+  receiverId     String @db.ObjectId
+  sentDate       DateTime @default(now())
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  sender       User @relation("Sender", fields: [senderId], references: [id])
+  receiver     User @relation("Receiver", fields: [receiverId], references: [id])
+}
+
+model RatingAndReview {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String @db.ObjectId
+  productId  String @db.ObjectId
+  rating     Int
+  reviewText String
+  reviewDate DateTime @default(now())
+  user      User @relation(fields: [userId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
+}
