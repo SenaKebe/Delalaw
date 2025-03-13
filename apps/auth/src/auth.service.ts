@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'apps/libs/prisma/src/prisma.service';
 import { CreateUserDto } from './dto/register.dto';
-import { hashPassword } from 'apps/libs/common/src/hash.util';
+import { hashPassword } from 'apps/libs/utils/src/hash.util';
 @Injectable()
 export class AuthService {
   constructor(private prisma: PrismaService) {}

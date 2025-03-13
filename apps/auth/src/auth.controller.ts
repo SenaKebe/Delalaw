@@ -1,6 +1,7 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/register.dto';
+import { JwtAuthGuard } from './guards/jwt.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -11,5 +12,9 @@ export class AuthController {
     return this.authService.register(dto);
   }
 
-  // Add other routes like login if required
+  @UseGuards(JwtAuthGuard)
+  @Get('protected')
+  getProtectedRoute() {
+    return { message: 'This is a protected route' };
+  }
 }
